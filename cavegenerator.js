@@ -134,27 +134,10 @@ const CaveUtils = {
     }
 };
 
-
-const DEFAULT_COLS = 20;
-const DEFAULT_ROWS = 16;
-const DEFAULT_EXITS = [4, (DEFAULT_ROWS - 3) * DEFAULT_COLS - 1];
-const room = new Room({
-    cols: DEFAULT_COLS,
-    rows: DEFAULT_ROWS,
-    exits: DEFAULT_EXITS
-});
-
-room.generate();
-prettyPrint(room);
-
-function prettyPrint(room) {
-    let roomString = '';
-    for (let i = 0; i < room.rows; i++) {
-        roomString += room.cells.slice(room.cols * i, room.cols * (i + 1)).join('') + '\n';
-    }
-    console.log(roomString);
-}
-
-function prettyDisplay(room) {
-    // TODO
-};
+// function prettyPrint(room) {
+//     let roomString = '';
+//     for (let i = 0; i < room.rows; i++) {
+//         roomString += room.cells.slice(room.cols * i, room.cols * (i + 1)).join('') + '\n';
+//     }
+//     console.log(roomString);
+// }
