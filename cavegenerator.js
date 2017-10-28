@@ -105,7 +105,7 @@ Room.prototype.carve = function (pos, finalPos) {
     while (pos !== finalPos) {
         const neighbors = this.getUnvisitedNeighbors(pos);
         if (neighbors.length > 0) {
-            pos = neighbors[Math.floor(Math.random() * neighbors.length)];
+            pos = CaveUtils.randomChoice(neighbors);
             this.cells[pos] = CELL_EMPTY;
         } else {
             // continue from the closest
@@ -123,6 +123,15 @@ Room.prototype.computeDistance = function (pos1, pos2) {
     var dx = x2 - x1;
     var dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
+};
+
+const CaveUtils = {
+    randomInt: function (max) {
+        return Math.floor(Math.random() * length);
+    },
+    randomChoice: function (values) {
+        return values[Math.floor(Math.random() * value.length)];
+    }
 };
 
 
