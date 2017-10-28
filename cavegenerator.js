@@ -59,7 +59,7 @@ Room.prototype.getClosestEmptyCell = function (pos) {
         return;
     }
 
-    let cell = cell.value;
+    cell = cell.value;
     let closest = [cell];
     let closestDistance = this.computeDistance(cell, pos);
 
@@ -89,7 +89,6 @@ Room.prototype.getUnvisitedNeighbors = function (pos) {
     return neighbors.filter(p => this.cells[p] === CELL_FULL);
 };
 Room.prototype.generate = function () {
-
     // TODO: randomize this choice
     const entrance = this.exits[0];
     const exit = this.exits[1];
@@ -125,7 +124,6 @@ Room.prototype.computeDistance = function (pos1, pos2) {
     var dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
 };
-
 
 
 const DEFAULT_COLS = 20;
