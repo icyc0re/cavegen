@@ -89,10 +89,11 @@ Room.prototype.getUnvisitedNeighbors = function (pos) {
     return neighbors.filter(p => this.cells[p] === CELL_FULL);
 };
 Room.prototype.generate = function () {
-    // TODO: randomize this choice
-    const entrance = this.exits[0];
-    const exit = this.exits[1];
-    this.carve(entrance, exit);
+    const id1 = CaveUtils.randomIndex(this.exits.length);
+    const id2 = CaveUtils.randomIndex(this.exits.length - 1);
+    const startPos = this.exits[id1];
+    const endPos = (id2 < id1) ? this.exits[id2] : this.exits[id2 + 1];
+    this.carve(startPos, endPos);
 };
 Room.prototype.carve = function (pos, finalPos) {
     // preprocess
