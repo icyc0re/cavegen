@@ -45,7 +45,7 @@ Room.prototype.emptyCellGenerator = function* () {
 Room.prototype.emptyCellWithNeighborsGenerator = function* () {
     const emptyCells = this.emptyCellGenerator();
     for (let pos of emptyCells) {
-        const neighbors = this.getNeighbors(pos);
+        const neighbors = this.getUnvisitedNeighbors(pos);
         if (neighbors.length > 0) {
             yield pos;
         }
@@ -69,10 +69,10 @@ Room.prototype.getClosestEmptyCell = function (pos) {
             closest = [cell];
             closestDistance = distance;
         } else if (distance === closestDistance) {
-            closest.append(p);
+            closest.push(cell);
         }
     }
-    return closest;
+    return CaveUtils.randomChoice(closest);
 };
 Room.prototype.getNeighbors = function (pos) {
     const dimX = this.cols, dimY = this.rows, dim = dimX * dimY;
@@ -89,11 +89,19 @@ Room.prototype.getUnvisitedNeighbors = function (pos) {
     return neighbors.filter(p => this.cells[p] === CELL_FULL);
 };
 Room.prototype.generate = function () {
-    const id1 = CaveUtils.randomIndex(this.exits.length);
-    const id2 = CaveUtils.randomIndex(this.exits.length - 1);
+    const id1 = CaveUtils.randomInt(this.exits.length);
+    const id2 = CaveUtils.randomInt(this.exits.length - 1);
     const startPos = this.exits[id1];
     const endPos = (id2 < id1) ? this.exits[id2] : this.exits[id2 + 1];
-    this.carve(startPos, endPos);
+
+    // assume it has only one
+    const endPosNeighbor = this.getUnvisitedNeighbors(endPos)[0];
+    if (typeof endPosNeighbor === 'undefined') {
+        console.warn('ERROR generating cave, invalid input');
+        return;
+    }
+
+    this.carve(startPos, endPosNeighbor);
 };
 Room.prototype.carve = function (pos, finalPos) {
     // preprocess
@@ -102,7 +110,6 @@ Room.prototype.carve = function (pos, finalPos) {
     // pos = this.getUnvisitedNeighbors(pos)[0]; // should have only 1
     // this.cells[pos] = CELL_EMPTY;
 
-    finalPos = finalPos - 1;
     while (pos !== finalPos) {
         const neighbors = this.getUnvisitedNeighbors(pos);
         if (neighbors.length > 0) {
@@ -111,9 +118,10 @@ Room.prototype.carve = function (pos, finalPos) {
         } else {
             // continue from the closest
             pos = this.getClosestEmptyCell(finalPos);
-            console.log(pos);
+            console.log(pos, finalPos,this.getUnvisitedNeighbors(pos));
         }
     }
+    console.log(this.cells[finalPos]);
     // get 
 };
 Room.prototype.computeDistance = function (pos1, pos2) {
@@ -128,10 +136,10 @@ Room.prototype.computeDistance = function (pos1, pos2) {
 
 const CaveUtils = {
     randomInt: function (max) {
-        return Math.floor(Math.random() * length);
+        return Math.floor(Math.random() * max);
     },
     randomChoice: function (values) {
-        return values[Math.floor(Math.random() * value.length)];
+        return values[Math.floor(Math.random() * values.length)];
     }
 };
 
