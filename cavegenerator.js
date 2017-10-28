@@ -104,12 +104,6 @@ Room.prototype.generate = function () {
     this.carve(startPos, endPosNeighbor);
 };
 Room.prototype.carve = function (pos, finalPos) {
-    // preprocess
-    // finalPos = this.getUnvisitedNeighbors(finalPos)[0]; // should have only 1
-    // this.cells[finalPos] = CELL_EMPTY;
-    // pos = this.getUnvisitedNeighbors(pos)[0]; // should have only 1
-    // this.cells[pos] = CELL_EMPTY;
-
     while (pos !== finalPos) {
         const neighbors = this.getUnvisitedNeighbors(pos);
         if (neighbors.length > 0) {
@@ -118,11 +112,8 @@ Room.prototype.carve = function (pos, finalPos) {
         } else {
             // continue from the closest
             pos = this.getClosestEmptyCell(finalPos);
-            console.log(pos, finalPos,this.getUnvisitedNeighbors(pos));
         }
     }
-    console.log(this.cells[finalPos]);
-    // get 
 };
 Room.prototype.computeDistance = function (pos1, pos2) {
     var x1 = Math.floor(pos1 % this.cols);
