@@ -53,14 +53,23 @@ Room.prototype.emptyCellWithNeighborsGenerator = function* () {
 };
 Room.prototype.getClosestEmptyCell = function (pos) {
     const emptyCells = this.emptyCellWithNeighborsGenerator();
-    let p = emptyCells.next().value;
-    let closest = p;
-    let closestDistance = this.computeDistance(p, pos);
+    let cell = emptyCells.next();
+    if (cell.done) {
+        console.warn('ERROR in closest empty cell');
+        return;
+    }
 
-    for (p of emptyCells) {
-        const distance = this.computeDistance(p, pos);
+    let cell = cell.value;
+    let closest = [cell];
+    let closestDistance = this.computeDistance(cell, pos);
+
+    for (cell of emptyCells) {
+        const distance = this.computeDistance(cell, pos);
         if (distance < closestDistance) {
-            closest = p;
+            closest = [cell];
+            closestDistance = distance;
+        } else if (distance === closestDistance) {
+            closest.append(p);
         }
     }
     return closest;
