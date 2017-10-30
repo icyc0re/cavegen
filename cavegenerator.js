@@ -45,44 +45,34 @@ Room.prototype.generateExits = function (n = 2) {
 };
 Room.prototype.emptyCellGenerator = function* () {
     // get empty cells that 
-    const cells = this.cells, len = cells.length;
+    const cells = this.cells, len = cells.length, exits = this.exits;
     for (let i = 0; i < len; i++) {
-        if (cells[i] === CELL_EMPTY && this.exits.indexOf(i) === -1) {
+        if (cells[i] === CELL_EMPTY && exits.indexOf(i) === -1) {
             yield i;
         }
     }
 };
 Room.prototype.emptyCellWithNeighborsGenerator = function* () {
     const emptyCells = this.emptyCellGenerator();
-    for (let pos of emptyCells) {
-        const neighbors = this.getUnvisitedNeighbors(pos);
-        if (neighbors.length > 0) {
+    for (const pos of emptyCells) {
+        if (this.getUnvisitedNeighbors(pos).length > 0) {
             yield pos;
         }
     }
 };
 Room.prototype.getClosestEmptyCell = function (pos) {
     const emptyCells = this.emptyCellWithNeighborsGenerator();
-    let cell = emptyCells.next();
-    if (cell.done) {
+    const closest = new MinimumValue();
+
+    for (const cell of emptyCells) {
+        closest.update(cell, this.computeDistance(cell, pos));
+    }
+    if (closest.elements.length === 0) {
         console.warn('ERROR in closest empty cell');
         return;
     }
 
-    cell = cell.value;
-    let closest = [cell];
-    let closestDistance = this.computeDistance(cell, pos);
-
-    for (cell of emptyCells) {
-        const distance = this.computeDistance(cell, pos);
-        if (distance < closestDistance) {
-            closest = [cell];
-            closestDistance = distance;
-        } else if (distance === closestDistance) {
-            closest.push(cell);
-        }
-    }
-    return CaveUtils.randomChoice(closest);
+    return CaveUtils.randomChoice(closest.elements);
 };
 Room.prototype.topNeighbor = function (pos) {
     const n = pos - this.cols;
@@ -98,21 +88,20 @@ Room.prototype.rightNeighbor = function (pos) {
 Room.prototype.leftNeighbor = function (pos) {
     return pos % this.cols ? pos - 1 : null;
 };
-
 Room.prototype.getNeighbors = function (pos) {
     const allNeighbors = [];
-    let tmp;
-    if (tmp = this.topNeighbor(pos)) {
-        allNeighbors.push(tmp);
+    let neighbor;
+    if (neighbor = this.topNeighbor(pos)) {
+        allNeighbors.push(neighbor);
     }
-    if (tmp = this.bottomNeighbor(pos)) {
-        allNeighbors.push(tmp);
+    if (neighbor = this.bottomNeighbor(pos)) {
+        allNeighbors.push(neighbor);
     }
-    if (tmp = this.rightNeighbor(pos)) {
-        allNeighbors.push(tmp);
+    if (neighbor = this.rightNeighbor(pos)) {
+        allNeighbors.push(neighbor);
     }
-    if (tmp = this.leftNeighbor(pos)) {
-        allNeighbors.push(tmp);
+    if (neighbor = this.leftNeighbor(pos)) {
+        allNeighbors.push(neighbor);
     }
     return allNeighbors;
 };
@@ -147,12 +136,13 @@ Room.prototype.carve = function (pos, finalPos) {
     }
 };
 Room.prototype.computeDistance = function (pos1, pos2) {
-    var x1 = Math.floor(pos1 % this.cols);
-    var y1 = Math.floor(pos1 / this.cols);
-    var x2 = Math.floor(pos2 % this.cols);
-    var y2 = Math.floor(pos2 / this.cols);
-    var dx = x2 - x1;
-    var dy = y2 - y1;
+    const cols = this.cols;
+    const y1 = Math.floor(pos1 / cols);
+    const x1 = pos1 - y1 * cols;
+    const y2 = Math.floor(pos2 / cols);
+    const x2 = pos2 - y2 * cols;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
 };
 
@@ -161,22 +151,36 @@ const CaveUtils = {
         return Math.floor(Math.random() * max);
     },
     randomChoice: function (values) {
-        return values[Math.floor(Math.random() * values.length)];
+        return values[this.randomInt(values.length)];
     },
     randomChoices: function (values, n) {
         // generate n values
-        const indexes = {};
+        const indexes = [];
         for (let i = 0; i < n; i++) {
             let choice = this.randomInt(values.length);
-            while (indexes.hasOwnProperty(choice)) {
+            while (indexes.indexOf(choice) !== -1) {
                 choice = (choice + 1) % values.length;
             }
-            indexes[choice] = true;
+            indexes.push(choice);
         }
-        return Object.keys(indexes).map(x => Number(x));
+        return indexes;
     }
 };
 
+const MinimumValue = function () {
+    this.elements = [];
+    this.value = Infinity;
+};
+MinimumValue.prototype.update = function (element, value) {
+    if (value > this.value) {
+        return;
+    }
+    if (value < this.value) {
+        this.value = value;
+        this.elements.length = 0;
+    }
+    this.elements.push(element);
+};
 // function prettyPrint(room) {
 //     let roomString = '';
 //     for (let i = 0; i < room.rows; i++) {
