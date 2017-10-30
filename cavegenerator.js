@@ -2,14 +2,15 @@ const CELL_WALL = 'X';
 const CELL_FULL = '#';
 const CELL_EMPTY = ' ';
 
-const Room = function (opts) {
+function Room(opts) {
     this.cols = opts.cols;
     this.rows = opts.rows;
-    this.exits = opts.exits;
-    this.reset();
+    this.resetCells();
+    this.exits = opts.exits || [];
+    this.generateExits();
 };
 Room.prototype.constructor = Room;
-Room.prototype.reset = function () {
+Room.prototype.resetCells = function () {
     const dimX = this.cols, dimY = this.rows;
     const cells = Array(dimX * dimY).fill(CELL_FULL);
     const lastRowOffset = dimX * (dimY - 1);
@@ -21,17 +22,26 @@ Room.prototype.reset = function () {
         cells[i] = CELL_WALL;
         cells[i - 1] = CELL_WALL;
     }
-    // empty the exits (where the code will start from)
-    this.exits.forEach(exit => {
-        cells[exit] = CELL_EMPTY;
-    });
     this.cells = cells;
 };
+Room.prototype.reset = function (resetExits) {
+    this.resetCells();
+
+    if (this.exits.length === 0 || resetExits === true) {
+        this.generateExits();
+    }
+};
 Room.prototype.generateExits = function (n = 2) {
-    // generate side
-    // generate number
-    // add to exits
-    this.reset();
+    // TODO: add verification, the 2 exits cannot be neighbors (or closer than a defined distance)
+    const walls = [];
+    for (let i = 0; i < this.cells.length; i++) {
+        if (this.cells[i] === CELL_WALL && this.getUnvisitedNeighbors(i).length > 0) {
+            walls.push(i);
+        }
+    }
+    const choices = CaveUtils.randomChoices(walls, n);
+    this.exits = choices.map(p => walls[p]);
+    this.exits.forEach(exit => this.cells[exit] = CELL_EMPTY);
 };
 Room.prototype.emptyCellGenerator = function* () {
     // get empty cells that 
@@ -131,6 +141,18 @@ const CaveUtils = {
     },
     randomChoice: function (values) {
         return values[Math.floor(Math.random() * values.length)];
+    },
+    randomChoices: function (values, n) {
+        // generate n values
+        const indexes = {};
+        for (let i = 0; i < n; i++) {
+            let choice = this.randomInt(values.length);
+            while (indexes.hasOwnProperty(choice)) {
+                choice = (choice + 1) % values.length;
+            }
+            indexes[choice] = true;
+        }
+        return Object.keys(indexes);
     }
 };
 
