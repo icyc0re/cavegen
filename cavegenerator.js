@@ -84,25 +84,46 @@ Room.prototype.getClosestEmptyCell = function (pos) {
     }
     return CaveUtils.randomChoice(closest);
 };
-Room.prototype.getNeighbors = function (pos) {
-    const dimX = this.cols, dimY = this.rows, dim = dimX * dimY;
-    const topNeighbor = pos => pos < dimX ? null : pos - dimX;
-    const bottomNeighbor = pos => pos + dimX < dim ? pos + dimX : null;
-    const rightNeighbor = pos => (pos + 1) % dimX ? pos + 1 : null;
-    const leftNeighbor = pos => pos % dimX ? pos - 1 : null;
+Room.prototype.topNeighbor = function (pos) {
+    const n = pos - this.cols;
+    return n >= 0 ? n : null;
+};
+Room.prototype.bottomNeighbor = function (pos) {
+    const n = pos + this.cols;
+    return n < this.cells.length ? n : null;
+};
+Room.prototype.rightNeighbor = function (pos) {
+    return (pos + 1) % this.cols ? pos + 1 : null;
+};
+Room.prototype.leftNeighbor = function (pos) {
+    return pos % this.cols ? pos - 1 : null;
+};
 
-    const allNeighbors = [topNeighbor(pos), bottomNeighbor(pos), rightNeighbor(pos), leftNeighbor(pos)];
-    return allNeighbors.filter(n => n != null);
+Room.prototype.getNeighbors = function (pos) {
+    const allNeighbors = [];
+    let tmp;
+    if (tmp = this.topNeighbor(pos)) {
+        allNeighbors.push(tmp);
+    }
+    if (tmp = this.bottomNeighbor(pos)) {
+        allNeighbors.push(tmp);
+    }
+    if (tmp = this.rightNeighbor(pos)) {
+        allNeighbors.push(tmp);
+    }
+    if (tmp = this.leftNeighbor(pos)) {
+        allNeighbors.push(tmp);
+    }
+    return allNeighbors;
 };
 Room.prototype.getUnvisitedNeighbors = function (pos) {
     const neighbors = this.getNeighbors(pos);
     return neighbors.filter(p => this.cells[p] === CELL_FULL);
 };
 Room.prototype.generate = function () {
-    const id1 = CaveUtils.randomInt(this.exits.length);
-    const id2 = CaveUtils.randomInt(this.exits.length - 1);
+    const [id1, id2] = CaveUtils.randomChoices(this.exits, 2);
     const startPos = this.exits[id1];
-    const endPos = (id2 < id1) ? this.exits[id2] : this.exits[id2 + 1];
+    const endPos = this.exits[id2];
 
     // assume it has only one
     const endPosNeighbor = this.getUnvisitedNeighbors(endPos)[0];
@@ -152,7 +173,7 @@ const CaveUtils = {
             }
             indexes[choice] = true;
         }
-        return Object.keys(indexes);
+        return Object.keys(indexes).map(x => Number(x));
     }
 };
 
