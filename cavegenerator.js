@@ -11,6 +11,7 @@ function Room(opts) {
 };
 Room.prototype.constructor = Room;
 Room.prototype.resetCells = function () {
+    // reset the state of the cells as FULL with WALL on the outside
     const dimX = this.cols, dimY = this.rows;
     const cells = Array(dimX * dimY).fill(CELL_FULL);
     const lastRowOffset = dimX * (dimY - 1);
@@ -27,12 +28,13 @@ Room.prototype.resetCells = function () {
 Room.prototype.reset = function (resetExits) {
     this.resetCells();
 
+    // generate 2 exits if none exists or if the reset is forced
     if (this.exits.length === 0 || resetExits === true) {
         this.generateExits();
     }
 };
 Room.prototype.generateExits = function (n = 2) {
-    // TODO: add verification, the 2 exits cannot be neighbors (or closer than a defined distance)
+    // generate n exits from cells that are WALLS and that have at least a FULL neighbor (to start the carving)
     const walls = [];
     for (let i = 0; i < this.cells.length; i++) {
         if (this.cells[i] === CELL_WALL && this.getUnvisitedNeighbors(i).length > 0) {
@@ -44,7 +46,7 @@ Room.prototype.generateExits = function (n = 2) {
     this.exits.forEach(exit => this.cells[exit] = CELL_EMPTY);
 };
 Room.prototype.emptyCellGenerator = function* () {
-    // get empty cells that 
+    // get a generator of empty cells (excluding exits)
     const cells = this.cells, len = cells.length, exits = this.exits;
     for (let i = 0; i < len; i++) {
         if (cells[i] === CELL_EMPTY && exits.indexOf(i) === -1) {
@@ -53,6 +55,7 @@ Room.prototype.emptyCellGenerator = function* () {
     }
 };
 Room.prototype.emptyCellWithNeighborsGenerator = function* () {
+    // get a generator of empty cells with at least 1 unvisited neighbor
     const emptyCells = this.emptyCellGenerator();
     for (const pos of emptyCells) {
         if (this.getUnvisitedNeighbors(pos).length > 0) {
@@ -61,6 +64,7 @@ Room.prototype.emptyCellWithNeighborsGenerator = function* () {
     }
 };
 Room.prototype.getClosestEmptyCell = function (pos) {
+    // get the closest empty cell with unvisited neighbor
     const emptyCells = this.emptyCellWithNeighborsGenerator();
     const closest = new MinimumValue();
 
@@ -89,6 +93,7 @@ Room.prototype.leftNeighbor = function (pos) {
     return pos % this.cols ? pos - 1 : null;
 };
 Room.prototype.getNeighbors = function (pos) {
+    // return all valid neighbors of the current cell
     const allNeighbors = [];
     let neighbor;
     if (neighbor = this.topNeighbor(pos)) {
@@ -106,15 +111,16 @@ Room.prototype.getNeighbors = function (pos) {
     return allNeighbors;
 };
 Room.prototype.getUnvisitedNeighbors = function (pos) {
+    // return all unvisited neighbors of the current cell (unvisited = not WALL nor EMPTY)
     const neighbors = this.getNeighbors(pos);
     return neighbors.filter(p => this.cells[p] === CELL_FULL);
 };
 Room.prototype.generate = function () {
+    // randomly choose the exits (scales if more)
     const [id1, id2] = CaveUtils.randomChoices(this.exits, 2);
     const startPos = this.exits[id1];
     const endPos = this.exits[id2];
 
-    // assume it has only one
     const endPosNeighbor = this.getUnvisitedNeighbors(endPos)[0];
     if (typeof endPosNeighbor === 'undefined') {
         console.warn('ERROR generating cave, invalid input');
@@ -124,6 +130,7 @@ Room.prototype.generate = function () {
     this.carve(startPos, endPosNeighbor);
 };
 Room.prototype.carve = function (pos, finalPos) {
+    // start carving until the final position is reached
     while (pos !== finalPos) {
         const neighbors = this.getUnvisitedNeighbors(pos);
         if (neighbors.length > 0) {
@@ -136,6 +143,7 @@ Room.prototype.carve = function (pos, finalPos) {
     }
 };
 Room.prototype.computeDistance = function (pos1, pos2) {
+    // compute the euclidean distance between 2 cells
     const cols = this.cols;
     const y1 = Math.floor(pos1 / cols);
     const x1 = pos1 - y1 * cols;
@@ -181,6 +189,7 @@ MinimumValue.prototype.update = function (element, value) {
     }
     this.elements.push(element);
 };
+
 // function prettyPrint(room) {
 //     let roomString = '';
 //     for (let i = 0; i < room.rows; i++) {
